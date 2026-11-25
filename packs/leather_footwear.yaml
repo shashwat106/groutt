@@ -1,0 +1,106 @@
+# Leather footwear manufacturing pack.
+# Process groups follow a typical leather footwear export unit's ERP:
+# Cutting -> Fabrication -> Lasting & Soling -> Finishing -> Packing.
+# Every number below is a generic starting default (default: true). The business's own
+# imported or confirmed data always overrides it.
+key: leather_footwear
+name: Leather footwear manufacturing
+version: "1.0"
+unit_of_output: pair
+units_of_measure: [pair, sq_ft, dcm, sq_dm, metre, kg, piece]
+
+stages:
+  - {key: cutting, name: Cutting (clicking), group: Cutting, machine_type: clicking_press, minutes_per_unit: 12,
+     description: Upper and lining components are cut from leather hides with dies on a clicking press}
+  - {key: skiving, name: Skiving, group: Fabrication, machine_type: skiving_machine, minutes_per_unit: 6,
+     description: Edges of cut components are thinned so they fold and stitch cleanly}
+  - {key: stitching, name: Stitching (closing), group: Fabrication, machine_type: stitching_machine, minutes_per_unit: 45,
+     description: Upper is assembled - zig-zag, eyeleting, lining attach. Usually the bottleneck}
+  - {key: lasting, name: Lasting, group: Lasting & Soling, machine_type: lasting_machine, minutes_per_unit: 15,
+     description: Upper is pulled over the last (farma) and fixed to the insole}
+  - {key: soling, name: Sole attaching, group: Lasting & Soling, machine_type: sole_press, minutes_per_unit: 10,
+     description: Sole is cemented and pressed to the lasted upper}
+  - {key: finishing, name: Finishing, group: Finishing, machine_type: finishing_station, minutes_per_unit: 8,
+     description: Cleaning, polishing, edge colouring, quality check}
+  - {key: packing, name: Packing, group: Packing, machine_type: packing_table, minutes_per_unit: 4,
+     description: Sock label, tissue, box, carton and box label}
+
+parameters:
+  - {key: cutting_wastage_pct, label: Leather cutting wastage, value: 10, unit: "%",
+     description: Extra leather lost in clicking beyond the net component area}
+  - {key: rejection_rate_pct, label: Rejection rate, value: 2, unit: "%",
+     description: Pairs rejected in QC that need re-cutting}
+  - {key: monthly_output_units, label: Planned monthly output, value: 8000, unit: pairs,
+     description: Used to spread monthly overheads per pair}
+  - {key: overhead_allocation_method, label: Overhead allocation, value: per_unit_on_planned_output,
+     description: Monthly overheads divided by planned monthly output}
+  - {key: extra_shift_cost_per_day, label: Extra shift cost per day, value: 6000, unit: INR,
+     description: Shift premium, supervisor and power for one extra shift}
+  - {key: max_shifts_per_day, label: Max shifts per day, value: 2, unit: shifts}
+  - {key: material_buffer_days, label: Material buffer before due date, value: 7, unit: days,
+     description: Leather must arrive at least this many days before the due date}
+  - {key: weekly_off_day, label: Weekly off day (0=Mon..6=Sun), value: 6}
+  - {key: payment_chase_after_days, label: Chase payments after, value: 30, unit: days late,
+     description: Reminders are drafted automatically once an invoice is this late}
+  - {key: gst_rate_pct, label: GST rate on sales, value: 5, unit: "%",
+     description: "Footwear up to Rs 2,500 per pair; higher above that. Verify the current rate with your CA"}
+
+product_types:
+  - {key: oxford, name: Oxford, material_per_unit: 2.2, material_unit: sq_ft}
+  - {key: derby, name: Derby, material_per_unit: 2.0, material_unit: sq_ft}
+  - {key: loafer, name: Loafer, material_per_unit: 1.8, material_unit: sq_ft}
+  - {key: boot, name: Ankle boot, material_per_unit: 3.2, material_unit: sq_ft}
+
+formulas:
+  - {key: cost_per_pair, ref: engine.costing.unit_cost, description: Material + wastage + labour + overhead + rejection}
+  - {key: capacity_check, ref: engine.capacity.check_order, description: Hours per stage vs hours available}
+  - {key: material_shortfall, ref: engine.stock.shortfall, description: MRP-style need vs stock, reservations and open POs}
+  - {key: cash_forecast, ref: engine.cashflow.forecast, description: Daily projected bank balance}
+  - {key: order_evaluation, ref: engine.whatif.evaluate_order, description: Verdict, profit and next actions for an order}
+
+# Data only - a checklist, not legal advice. Verify against current regulation and buyer RSLs.
+standards:
+  - {key: cr6, name: Chromium VI in leather, category: restricted_chemical, limit: "< 3 mg/kg",
+     reference: "EU REACH Annex XVII entry 47 (leather articles in contact with skin)"}
+  - {key: azo, name: Banned azo dyes (aromatic amines), category: restricted_chemical, limit: "<= 30 mg/kg per amine",
+     reference: "EU REACH Annex XVII entry 43"}
+  - {key: pcp, name: Pentachlorophenol (PCP), category: restricted_chemical, limit: "Not detected (typical buyer RSL 5 mg/kg)",
+     reference: "EU POPs Regulation; buyer RSLs"}
+  - {key: dmfu, name: Dimethyl fumarate (DMFu), category: restricted_chemical, limit: "<= 0.1 mg/kg",
+     reference: "EU REACH Annex XVII entry 61"}
+  - {key: formaldehyde, name: Free formaldehyde, category: restricted_chemical, limit: "Per buyer RSL (commonly 75 mg/kg skin contact)",
+     reference: "AFIRM RSL / buyer RSL"}
+  - {key: eff_cr_total, name: Total chromium in effluent, category: effluent, limit: "2 mg/L",
+     reference: "CPCB tannery effluent standards (applies to units that tan)", note: Mainly relevant if the unit has a tannery}
+  - {key: eff_bod, name: BOD (3 days, 27C), category: effluent, limit: "30 mg/L to inland surface water",
+     reference: "CPCB general/tannery standards"}
+  - {key: eff_ph, name: pH of effluent, category: effluent, limit: "5.5 - 9.0", reference: "CPCB standards"}
+
+glossary:
+  - {term: Wet blue, meaning: Hide after chrome tanning, still wet and bluish - the first stable stage of leather}
+  - {term: Crust, meaning: Tanned leather that has been dried but not yet finished}
+  - {term: Finished leather, meaning: Crust leather after dyeing and surface finishing, ready for cutting, local_terms: [chamda]}
+  - {term: Clicking, meaning: Cutting upper components from a hide with dies on a clicking press, local_terms: [kataai]}
+  - {term: Skiving, meaning: Thinning the edges of leather components before stitching}
+  - {term: Closing / fabrication, meaning: Stitching cut components into a finished upper, local_terms: [silai]}
+  - {term: Zig-zag, meaning: Zig-zag stitch used to join lining and upper pieces}
+  - {term: Eyeleting, meaning: Fixing metal eyelets for laces}
+  - {term: Last, meaning: Foot-shaped mould the upper is pulled over, local_terms: [farma]}
+  - {term: Lasting, meaning: Pulling the upper over the last and fixing it to the insole}
+  - {term: Sole, meaning: Bottom of the shoe, local_terms: [tala]}
+  - {term: Sq ft yield, meaning: Usable area cut from a hide versus its measured area}
+  - {term: Dcm / sq dm, meaning: Square decimetre - leather area unit used in export (1 sq ft = 9.29 sq dm)}
+  - {term: Job work, meaning: Sending a process (e.g. stitching) to an outside unit through a gate pass}
+  - {term: Re-cutting ticket, meaning: Production ticket raised to re-cut components after a rejection}
+  - {term: MRP, meaning: Material required for pending orders after stock, open POs and job work are counted}
+
+excess_issue_reasons: [Poor quality of leather, Cutting mistake, Shade variation, Rejection in QC]
+
+onboarding_questions:
+  - {key: monthly_output_units, question: "How many pairs do you plan to make in a normal month?", unit: pairs}
+  - {key: rejection_rate_pct, question: "Roughly what % of pairs get rejected in QC?", unit: "%"}
+  - {key: cutting_wastage_pct, question: "How much extra leather do you lose in cutting, as a % of net area?", unit: "%"}
+  - {key: extra_shift_cost_per_day, question: "What does one extra shift cost you per day (premium, supervisor, power)?", unit: INR}
+  - {key: opening_cash_balance, question: "What is your bank balance today?", unit: INR}
+  - {key: weekly_off_day, question: "Which day is your weekly off?", type: choice,
+     options: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]}

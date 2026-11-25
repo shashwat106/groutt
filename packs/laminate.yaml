@@ -1,0 +1,54 @@
+# Decorative laminate (HPL) pack - added with zero code changes to show Grout is a platform.
+key: laminate
+name: Decorative laminate (HPL) manufacturing
+version: "1.0"
+unit_of_output: sheet
+units_of_measure: [sheet, kg, sq_m, litre]
+
+stages:
+  - {key: impregnation, name: Resin impregnation, group: Treating, machine_type: impregnator, minutes_per_unit: 1.5,
+     description: Kraft and decor paper are soaked in phenolic / melamine resin}
+  - {key: drying, name: Drying, group: Treating, machine_type: dryer, minutes_per_unit: 1.0}
+  - {key: layup, name: Lay-up, group: Pressing, machine_type: layup_table, minutes_per_unit: 2.0,
+     description: Decor, core and overlay sheets stacked into a book}
+  - {key: pressing, name: Hot pressing, group: Pressing, machine_type: multi_daylight_press, minutes_per_unit: 3.0,
+     description: Books pressed at high heat and pressure. Usually the bottleneck}
+  - {key: trimming, name: Trimming, group: Finishing, machine_type: trimmer, minutes_per_unit: 0.8}
+  - {key: sanding, name: Back sanding, group: Finishing, machine_type: sander, minutes_per_unit: 0.7}
+  - {key: inspection, name: Inspection & packing, group: Finishing, machine_type: inspection_table, minutes_per_unit: 1.0}
+
+parameters:
+  - {key: cutting_wastage_pct, label: Paper and resin wastage, value: 4, unit: "%"}
+  - {key: rejection_rate_pct, label: Rejection rate, value: 3, unit: "%"}
+  - {key: monthly_output_units, label: Planned monthly output, value: 30000, unit: sheets}
+  - {key: overhead_allocation_method, label: Overhead allocation, value: per_unit_on_planned_output}
+  - {key: extra_shift_cost_per_day, label: Extra shift cost per day, value: 9000, unit: INR}
+  - {key: max_shifts_per_day, label: Max shifts per day, value: 3, unit: shifts}
+  - {key: material_buffer_days, label: Material buffer before due date, value: 5, unit: days}
+  - {key: weekly_off_day, label: Weekly off day (0=Mon..6=Sun), value: 6}
+  - {key: payment_chase_after_days, label: Chase payments after, value: 45, unit: days late}
+  - {key: gst_rate_pct, label: GST rate on sales, value: 18, unit: "%", description: Verify the current rate with your CA}
+
+product_types:
+  - {key: hpl_1mm, name: 1 mm decorative HPL 8x4, material_per_unit: 1.45, material_unit: kg_resin}
+
+formulas:
+  - {key: cost_per_sheet, ref: engine.costing.unit_cost}
+  - {key: capacity_check, ref: engine.capacity.check_order}
+  - {key: material_shortfall, ref: engine.stock.shortfall}
+  - {key: order_evaluation, ref: engine.whatif.evaluate_order}
+
+standards:
+  - {key: formaldehyde_emission, name: Formaldehyde emission, category: quality, limit: "Per buyer / grade (E1 class commonly specified)",
+     reference: "EN 13986 / buyer specification"}
+
+glossary:
+  - {term: HPL, meaning: High-pressure laminate}
+  - {term: Kraft paper, meaning: Brown core paper impregnated with phenolic resin}
+  - {term: Book, meaning: A stack of sheets pressed together in one press opening}
+  - {term: Daylight, meaning: One opening in a multi-daylight press}
+
+onboarding_questions:
+  - {key: monthly_output_units, question: "How many sheets do you plan to make in a normal month?", unit: sheets}
+  - {key: rejection_rate_pct, question: "What % of sheets get rejected?", unit: "%"}
+  - {key: opening_cash_balance, question: "What is your bank balance today?", unit: INR}

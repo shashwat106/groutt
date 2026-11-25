@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Production{% endblock %}
+{% block style %}
+.row{display:grid;grid-template-columns:150px 1fr 240px;gap:18px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line2)}
+.row:last-child{border-bottom:0}
+.row b{display:block}.row small{color:var(--muted)}
+.seg a{padding:6px 12px;border:1px solid var(--line);margin-left:-1px;background:#fff;font-size:13px}
+.seg a:first-child{border-radius:8px 0 0 8px}.seg a:last-child{border-radius:0 8px 8px 0}
+.seg a.on{background:var(--blueBg);color:var(--blue);border-color:#c9d7f3}
+{% endblock %}
+{% block body %}
+<div class="head">
+  <div><h1>Production load</h1><p>Hours each section needs for open orders due in the next {{ days }} days, against what it can do on current shifts ({{ load.working_days }} working days)</p></div>
+  <div class="seg">{% for d in (7,14,21,30) %}<a href="?days={{ d }}" class="{{ 'on' if d==days }}">{{ d }} days</a>{% endfor %}</div>
+</div>
+<div class="card">
+  {% for r in rows %}
+  <div class="row">
+    <div><b>{{ r.label }}</b><small>{{ r.l.machines }} machine(s) · {{ r.l.shifts_per_day }} shift</small></div>
+    <div class="bar" style="height:12px"><i class="{{ r.bar.tone }}" style="width:{{ r.bar.w }}%"></i></div>
+    <div class="r"><b class="{{ 'bad-t' if r.bar.pct > 100 else ('warn-t' if r.bar.pct > 85) }}">{{ r.bar.pct }}% loaded</b><small>{{ r.l.hours_needed|num }}h needed of {{ r.l.hours_available|num }}h</small></div>
+  </div>
+  {% endfor %}
+</div>
+<p class="muted" style="font-size:12.5px;margin-top:12px">Over 100% means that section can't finish on current shifts: add a shift, send work out (job work) or move a due date. Use <a href="/check" style="color:var(--blue)">Check new order</a> to see the effect of a new order before accepting it.</p>
+{% endblock %}

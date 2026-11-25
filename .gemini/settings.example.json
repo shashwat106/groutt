@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "grout": {
+      "command": "C:\\path\\to\\grout\\.venv\\Scripts\\python.exe",
+      "args": ["C:\\path\\to\\grout\\server.py"],
+      "env": {
+        "INDUSTRYOS_ROLE": "owner",
+        "INDUSTRYOS_CONSOLE_URL": "http://localhost:8100"
+      },
+      "timeout": 30000,
+      "description": "Grout: Sharma Footwear factory brain (demo data)"
+    }
+  }
+}

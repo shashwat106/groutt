@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Purchases & bills{% endblock %}
+{% block style %}
+.flow{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
+.flow b{color:var(--ink);font-size:13px}
+.flow .arr{color:#c3cad5}
+.flags{margin:4px 0 0;padding:0;list-style:none;font-size:12.5px;color:var(--bad)}
+tr.ex td{background:#fffafa}
+{% endblock %}
+{% block body %}
+<div class="head">
+  <div><h1>Purchases &amp; bills</h1><p>Every purchase checked three ways: what you <b>ordered</b>, what <b>arrived</b>, and what the supplier <b>billed</b> in Tally</p></div>
+  <form method="post" action="/automations/match/run"><button class="btn">Re-check now</button></form>
+</div>
+<div class="grid k4" style="margin-bottom:16px">
+  <div class="card kpi"><div class="l">Need checking</div><div class="v {{ 'bad-t' if mr.exceptions }}">{{ mr.exceptions|length }}</div><div class="s">bills that don't match</div></div>
+  <div class="card kpi"><div class="l">Overbilled</div><div class="v {{ 'bad-t' if mr.overbilled_total }}">{{ mr.overbilled_total|inr }}</div><div class="s">more than your POs allow</div></div>
+  <div class="card kpi"><div class="l">Matched cleanly</div><div class="v ok-t">{{ mr.matched_count }}</div><div class="s">order = delivery = bill</div></div>
+  <div class="card kpi"><div class="l">Waiting</div><div class="v">{{ rows|selectattr('status','in',['awaiting_delivery','awaiting_bill'])|list|length }}</div><div class="s">delivery or bill not in yet</div></div>
+</div>
+<div class="card">
+  <table>
+    <tr><th>Purchase</th><th>Ordered → Received → Billed</th><th class="r">Billed</th><th class="r">Difference</th><th>Status</th><th>Supplier query</th></tr>
+    {% for r in rows %}
+    <tr class="{{ 'ex' if r.status in ('exception','bill_without_po','late') }}">
+      <td><b>{{ r.material }}</b><div class="muted" style="font-size:12.5px">{{ r.supplier }} · {% if r.po_id %}<span class="mono">PO-{{ r.po_id }}</span>{% else %}no PO{% endif %}{% if r.bills %} · bill {{ r.bills|join(', ') }}{% endif %}</div></td>
+      <td><div class="flow"><span><b>{{ r.ordered_qty|num }}</b>{% if r.ordered_rate %} @ {{ r.ordered_rate|inr_full }}{% endif %}</span><span class="arr">→</span>
+        <span><b>{{ r.received_qty|num }}</b></span><span class="arr">→</span>
+        <span><b>{{ r.billed_qty|num }}</b>{% if r.billed_rate %} @ {{ r.billed_rate|inr_full }}{% endif %}</span><span>{{ r.unit|unit }}</span></div>
+        {% if r.flags %}<ul class="flags">{% for f in r.flags %}<li>{{ f }}</li>{% endfor %}</ul>{% endif %}</td>
+      <td class="r">{{ r.billed_amount|inr_full if r.billed_amount else '—' }}</td>
+      <td class="r {{ 'bad-t' if r.difference > 0 }}">{{ ('+' ~ (r.difference|inr_full)) if r.difference > 0 else '—' }}</td>
+      <td><span class="pill {{ {'matched':'p-ok','exception':'p-bad','bill_without_po':'p-bad','late':'p-bad','awaiting_bill':'p-open','awaiting_delivery':'p-open'}[r.status] }}">{{ r.status|replace('_',' ') }}</span></td>
+      <td>{% set q = queries.get(r.key) %}{% if q %}<a href="/approvals" class="pill p-{{ q }}">{{ 'drafted, awaiting you' if q=='pending' else q }}</a>{% elif r.status in ('exception','bill_without_po') %}<span class="muted" style="font-size:12.5px">drafted on next check</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+    </tr>
+    {% else %}<tr><td colspan="6" class="empty">No purchases yet.</td></tr>{% endfor %}
+  </table>
+</div>
+<p class="muted" style="font-size:12.5px;margin-top:12px">Tolerance: quantity ±2%, rate ±0.5%. When a bill doesn't match, Grout drafts a polite query to the supplier asking for a credit note. You approve it before it's sent.</p>
+{% endblock %}

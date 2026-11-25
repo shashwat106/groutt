@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Check new order{% endblock %}
+{% block style %}
+.lay{grid-template-columns:300px 1fr;align-items:start}
+@media (max-width:1000px){.lay{grid-template-columns:1fr}}
+.f{display:grid;gap:12px}
+.verdict{padding:18px 20px;border-radius:var(--r);border:1px solid;display:flex;gap:14px;align-items:flex-start}
+.verdict.go{background:var(--okBg);border-color:#cde9d8}.verdict.cond{background:var(--warnBg);border-color:#f1dfb8}.verdict.no{background:var(--badBg);border-color:#f2cfcc}
+.verdict .big{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+.verdict.go .big{color:var(--ok)}.verdict.cond .big{color:var(--warn)}.verdict.no .big{color:var(--bad)}
+.verdict p{margin:4px 0 0;font-size:15.5px;font-weight:550;line-height:1.45}
+.nums{grid-template-columns:repeat(4,1fr)}
+.stage{display:grid;grid-template-columns:110px 1fr 170px;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line2)}
+.stage:last-child{border-bottom:0}
+.stage .nm{font-weight:550}.stage.bn .nm{color:var(--bad)}
+.track{position:relative;height:10px;background:var(--line2);border-radius:99px}
+.track i{position:absolute;left:0;top:0;bottom:0;border-radius:99px}
+.track .m1{position:absolute;left:50%;top:-4px;bottom:-4px;border-left:2px dashed #9aa5b5}
+.track i.ok{background:var(--ok)}.track i.warn{background:#e0a030}.track i.bad{background:var(--bad)}
+.legend{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin:6px 0 0 124px;padding-right:184px}
+.act li{margin:6px 0}
+.src{font-size:12px;color:var(--ink2);columns:2;margin:10px 0 0;padding-left:16px}
+{% endblock %}
+{% block body %}
+<div class="head"><div><h1>Check a new order</h1><p>Before you say yes: capacity, material, cash impact and profit, worked out from your own data</p></div></div>
+<div class="grid lay">
+  <div class="card"><div class="ch"><h2>Order inquiry</h2></div>
+    <form class="cb f" method="post" action="/check" data-busy>
+      <div><label>Customer</label><select name="customer"><option value="">(new inquiry)</option>{% for c in form.customers %}<option {{ 'selected' if inp.customer==c }}>{{ c }}</option>{% endfor %}</select></div>
+      <div><label>Product</label><select name="product">{% for p in form.products %}<option {{ 'selected' if inp.product==p }}>{{ p }}</option>{% endfor %}</select></div>
+      <div><label>Quantity (pairs)</label><input name="qty" type="number" min="1" value="{{ inp.qty|int if inp.qty else 2000 }}"></div>
+      <div><label>Due date</label><input name="due_date" type="date" value="{{ inp.due_date or form.default_due }}"></div>
+      <div><label>Price per pair (optional)</label><input name="price" type="number" step="0.01" placeholder="selling price" value="{{ inp.price }}"></div>
+      <button class="btn primary" style="justify-content:center">Check order</button>
+    </form>
+  </div>
+
+  <div class="grid" style="gap:16px">
+  {% if not result %}
+    <div class="card"><div class="empty" style="padding:60px 20px">Enter an inquiry and press <b>Check order</b>.<br>You'll see if the floor can make it in time, what material to buy, and what you'll actually earn.</div></div>
+  {% else %}
+    {% set v = result.verdict %}
+    <div class="verdict {{ 'no' if v=='not_feasible' else ('go' if v=='feasible' else 'cond') }}">
+      <div><div class="big">{{ {'feasible':'Yes, take it','feasible_with_extra_shift':'Yes, with an extra shift','feasible_with_purchase':'Yes, after buying material','feasible_with_extra_shift_and_purchase':'Yes, with an extra shift and a material purchase','not_feasible':'Not by this date'}[v] }}</div>
+      <p>{{ result.headline }}</p></div>
+    </div>
+
+    <div class="grid nums">
+      <div class="card kpi"><div class="l">Estimated profit</div><div class="v {{ 'bad-t' if result.estimated_profit < 0 else 'ok-t' }}">{{ result.estimated_profit|inr }}</div><div class="s">{{ result.profit_pct }}% of {{ result.revenue|inr }}</div></div>
+      <div class="card kpi"><div class="l">True cost per pair</div><div class="v">{{ result.unit_cost|inr_full }}</div><div class="s">price {{ result.price_per_unit|inr_full }}</div></div>
+      <div class="card kpi"><div class="l">Extra shift cost</div><div class="v">{{ result.extra_shift_cost|inr }}</div><div class="s">{{ result.capacity.extra_shifts_needed }} shift × {{ result.capacity.working_days }} working days</div></div>
+      <div class="card kpi"><div class="l">Material to buy</div><div class="v {{ 'warn-t' if result.stock.short }}">{{ result.stock.total_shortfall_cost|inr }}</div><div class="s">{{ result.stock.short|length }} item(s) short</div></div>
+    </div>
+
+    <div class="card"><div class="ch"><h2>Floor capacity until {{ result.capacity.working_days }} working days from now</h2><span class="muted" style="font-size:12.5px">this order + open orders due before it · dashed line = one shift</span></div>
+      <div class="cb">
+        {% for st in stages %}
+        <div class="stage {{ 'bn' if st.is_bottleneck }}">
+          <div class="nm">{{ st.label }}{% if st.is_bottleneck %} <span class="pill p-bad" style="margin-left:4px">bottleneck</span>{% endif %}</div>
+          <div class="track"><i class="{{ st.bar.tone }}" style="width:{{ [st.bar.pct/2,100]|min }}%"></i><span class="m1"></span></div>
+          <div class="r muted" style="font-size:12.5px"><b style="color:var(--ink)">{{ st.need|num }}h</b> / {{ st.one|num }}h · {{ st.shifts }} shift{{ 's' if st.shifts>1 }}</div>
+        </div>
+        {% endfor %}
+        <div class="legend"><span>0</span><span>1 shift</span><span>2 shifts</span></div>
+      </div>
+    </div>
+
+    {% if result.stock.short %}
+    <div class="card"><div class="ch"><h2>Material shortfall</h2><span class="muted" style="font-size:12.5px">after open orders and purchase orders already placed</span></div>
+      <table><tr><th>Material</th><th class="r">Need</th><th class="r">Available</th><th class="r">Short</th><th>Supplier</th><th></th></tr>
+      {% for l in result.stock.short %}{% set a = result.arrivals[loop.index0] %}
+        <tr><td><b>{{ l.material }}</b></td><td class="r">{{ l.required|num }} {{ l.unit|unit }}</td><td class="r">{{ l.available|num }}</td>
+          <td class="r bad-t"><b>{{ l.shortfall_qty|num }} {{ l.unit|unit }}</b><div class="muted" style="font-size:12px">{{ l.shortfall_cost|inr }}</div></td>
+          <td>{{ a.supplier or '—' }}<div class="{{ 'ok-t' if a.in_time else 'bad-t' }}" style="font-size:12px">{% if a.expected_arrival %}arrives {{ a.expected_arrival|d }} {{ '· in time' if a.in_time else '· too late' }}{% endif %}</div></td>
+          <td class="r"><form method="post" action="/check/draft-po"><input type="hidden" name="material_id" value="{{ l.material_id }}"><input type="hidden" name="qty" value="{{ l.shortfall_qty }}"><button class="btn sm primary">Draft PO</button></form></td></tr>
+      {% endfor %}</table>
+    </div>
+    {% endif %}
+
+    <div class="card"><div class="ch"><h2>Next steps</h2></div>
+      <div class="cb"><ul class="act" style="margin:0;padding-left:18px">{% for a in result.next_actions %}<li>{{ a }}</li>{% endfor %}</ul>
+        {% if result.assumptions %}
+        <details style="margin-top:14px"><summary>{{ result.assumptions|length }} input(s) still use industry defaults, confirm them to firm up this answer</summary>
+          <ul class="src">{% for a in result.assumptions %}<li>{{ a }}</li>{% endfor %}</ul></details>{% endif %}
+        <details style="margin-top:10px"><summary>Where every number came from ({{ result.sources|length }} sources)</summary>
+          <ul class="src">{% for s in result.sources %}<li>{{ s }}</li>{% endfor %}</ul></details>
+      </div>
+    </div>
+  {% endif %}
+  </div>
+</div>
+{% endblock %}

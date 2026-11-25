@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Connections{% endblock %}
+{% block style %}
+.conns{grid-template-columns:repeat(3,1fr)}
+@media (max-width:1000px){.conns{grid-template-columns:1fr}}
+.conn{padding:18px 20px;display:flex;flex-direction:column;gap:8px}
+.conn h3{margin:0;font-size:15px;display:flex;align-items:center;gap:8px}
+.conn p{margin:0;font-size:13px;color:var(--ink2)}
+.conn code{font-size:12px;background:var(--line2);padding:2px 6px;border-radius:5px;word-break:break-all}
+.drop{border:2px dashed #c9d3e3;border-radius:12px;padding:16px;text-align:center;background:#fafcff}
+{% endblock %}
+{% block body %}
+<div class="head"><div><h1>Connections</h1><p>Grout reads from the software you already use. Nobody types data twice.</p></div></div>
+{% if done %}<div class="flash">{{ done }}</div>{% endif %}
+<div class="grid conns" style="margin-bottom:16px">
+  <div class="card conn">
+    <h3>Tally <span class="pill p-ok">connected</span></h3>
+    <p>Day Book exports are picked up from <code>{{ inbox }}</code> every minute: sales, payments, goods received and supplier bills.</p>
+    <p class="muted" style="font-size:12.5px">{{ vcount }} entries synced{% if last_v %} · last {{ last_v|dt }}{% endif %}{% if waiting %} · <b>{{ waiting|length }} waiting</b>{% endif %}</p>
+    <form class="drop" method="post" action="/connections/upload" enctype="multipart/form-data">
+      <input type="file" name="file" accept=".xml" required style="border:0;padding:4px">
+      <button class="btn sm primary" style="margin-top:8px">Upload Tally export &amp; sync</button>
+    </form>
+    {% if demo_file %}<form method="post" action="/connections/demo-drop"><button class="btn sm" style="width:100%;justify-content:center">Demo: accountant exports today's Day Book</button></form>{% endif %}
+  </div>
+  <div class="card conn">
+    <h3>Tally Prime (live) <span class="pill p-open">ready</span></h3>
+    <p>With Tally's data port switched on (F1 › Settings › Connectivity, port 9000), Grout pulls the Day Book directly, with no exports needed.</p>
+    <p><code>uv run python -m connectors.tally_live</code></p>
+  </div>
+  <div class="card conn">
+    <h3>Excel / your own app <span class="pill p-open">ready</span></h3>
+    <p>Stock registers, party lists or exports from your own software (e.g. your order system) are read by column name, so any sheet layout works.</p>
+    <p class="muted" style="font-size:12.5px">Next: a direct database link to your existing order app.</p>
+  </div>
+</div>
+<div class="grid" style="grid-template-columns:1fr 1fr;gap:16px">
+  <div class="card"><div class="ch"><h2>Sync log</h2></div>
+    <table><tr><th>When</th><th>File</th><th>Result</th></tr>
+    {% for f in files %}<tr><td class="muted" style="white-space:nowrap">{{ f.created_at|dt }}</td><td style="font-size:13px">{{ f.filename }}</td>
+      <td><span class="pill {{ 'p-ok' if f.status=='synced' else ('p-open' if f.status=='duplicate' else 'p-bad') }}">{{ f.status }}</span> <span class="muted" style="font-size:12.5px">{{ f.summary }}</span></td></tr>
+    {% else %}<tr><td colspan="3" class="empty">Nothing synced yet.</td></tr>{% endfor %}</table>
+  </div>
+  <div class="card"><div class="ch"><h2>Latest entries from the books</h2><a href="/brief">See today's brief</a></div>
+    <table><tr><th>Date</th><th>Entry</th><th class="r">Amount</th></tr>
+    {% for v in recent %}<tr><td class="muted">{{ v.date|d }}</td><td style="font-size:13px"><b>{{ {'sales':'Sale','receipt':'Money in','receipt_note':'Goods in','purchase':'Supplier bill','payment':'Money out'}.get(v.vtype, v.vtype) }}</b> · {{ v.party }} <span class="mono">{{ v.number }}</span></td><td class="r">{{ v.amount|inr_full }}</td></tr>
+    {% else %}<tr><td colspan="3" class="empty">No entries yet.</td></tr>{% endfor %}</table>
+  </div>
+</div>
+{% endblock %}

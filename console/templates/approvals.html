@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Approvals{% endblock %}
+{% block style %}
+.ap{padding:18px 20px;border-bottom:1px solid var(--line2)}
+.ap:last-child{border-bottom:0}
+.ap.new{background:#f7faff;box-shadow:inset 3px 0 0 var(--blue)}
+.ap .top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.ap h3{margin:0;font-size:15px;font-weight:600}
+.ap .meta{color:var(--muted);font-size:12.5px;margin-top:2px}
+.ap .btns{display:flex;gap:8px;flex:none}
+.lines{margin-top:12px;border:1px solid var(--line2);border-radius:10px;overflow:hidden}
+.lines td,.lines th{padding:8px 12px}
+.msg{white-space:pre-wrap;background:#f3f7f2;border:1px solid #dfe9dc;border-radius:10px;padding:12px 14px;margin-top:12px;font-size:13.5px;max-width:560px}
+{% endblock %}
+{% block body %}
+<div class="head"><div><h1>Approvals</h1><p>The AI assistant drafts. Nothing is sent until you approve it here.</p></div></div>
+{% if done %}<div class="flash">{{ done }}</div>{% endif %}
+
+<div class="card" style="margin-bottom:16px">
+  <div class="ch"><h2>Waiting for you</h2><span class="muted" style="font-size:12.5px">{{ pending|length }} draft(s)</span></div>
+  {% for a in pending %}{% set d = details.get(a.id) %}
+  <div class="ap {{ 'new' if new == a.id }}">
+    <div class="top">
+      <div><h3>{{ a.summary }}</h3>
+        <div class="meta"><span class="pill p-pending">{{ a.type|replace('_',' ') }}</span> · drafted by {{ 'Grout automation' if a.requested_by_role == 'automation' else a.requested_by_role }} · {{ a.created_at|dt }} · #{{ a.id }}</div></div>
+      <div class="btns">
+        <form method="post" action="/approvals/{{ a.id }}/reject"><button class="btn danger">Reject</button></form>
+        <form method="post" action="/approvals/{{ a.id }}/approve"><button class="btn primary">Approve &amp; send</button></form>
+      </div>
+    </div>
+    {% if d and d.kind == 'po' %}
+      <table class="lines"><tr><th>Material</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Amount</th></tr>
+      {% for l in d.lines %}<tr><td>{{ l.material }}</td><td class="r">{{ l.qty|num }} {{ l.unit|unit }}</td><td class="r">{{ l.rate|inr_full }}</td><td class="r">{{ l.amount|inr_full }}</td></tr>{% endfor %}
+      <tr><td colspan="3" class="r"><b>Total to {{ d.supplier }}</b> · arrives {{ d.expected|d }} · pay by {{ d.due|d }}</td><td class="r"><b>{{ d.total|inr_full }}</b></td></tr></table>
+    {% elif d and d.kind == 'msg' %}
+      <div class="msg">{{ d.message }}</div>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="empty">Nothing waiting. When the assistant drafts a purchase order, invoice or reminder, it appears here instantly.</div>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <div class="ch"><h2>Decided</h2></div>
+  <table><tr><th>#</th><th>Action</th><th>Status</th><th>Decided by</th><th>When</th><th></th></tr>
+  {% for a in history %}
+    <tr><td class="mono">#{{ a.id }}</td><td>{{ a.summary }}</td><td><span class="pill p-{{ a.status }}">{{ a.status }}</span></td>
+      <td class="muted">{{ a.approved_by_role or '—' }}</td><td class="muted">{{ a.decided_at|dt }}</td>
+      <td class="r">{% if a.status == 'executed' %}<form method="post" action="/approvals/{{ a.id }}/undo"><button class="btn sm">Undo</button></form>{% endif %}</td></tr>
+  {% else %}<tr><td colspan="6" class="empty">No decisions yet.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

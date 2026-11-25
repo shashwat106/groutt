@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sample Tally export (masters + sales vouchers) for the import demo. Fictional data. -->
+<ENVELOPE>
+  <HEADER>
+    <TALLYREQUEST>Import Data</TALLYREQUEST>
+  </HEADER>
+  <BODY>
+    <IMPORTDATA>
+      <REQUESTDESC>
+        <REPORTNAME>All Masters</REPORTNAME>
+        <STATICVARIABLES><SVCURRENTCOMPANY>Sharma Footwear</SVCURRENTCOMPANY></STATICVARIABLES>
+      </REQUESTDESC>
+      <REQUESTDATA>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <LEDGER NAME="Lucknow Footwear Bazaar" ACTION="Create">
+            <PARENT>Sundry Debtors</PARENT>
+            <LEDGERMOBILE>+91 94150 77881</LEDGERMOBILE>
+            <EMAIL>lfb.accounts@example.com</EMAIL>
+            <LEDSTATENAME>Uttar Pradesh</LEDSTATENAME>
+            <PARTYGSTIN>09AABCL1234F1Z5</PARTYGSTIN>
+            <BILLCREDITPERIOD>30 Days</BILLCREDITPERIOD>
+          </LEDGER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <LEDGER NAME="Agra Shoe Emporium" ACTION="Create">
+            <PARENT>Sundry Debtors</PARENT>
+            <LEDGERMOBILE>+91 98370 66554</LEDGERMOBILE>
+            <LEDSTATENAME>Uttar Pradesh</LEDSTATENAME>
+            <BILLCREDITPERIOD>45 Days</BILLCREDITPERIOD>
+          </LEDGER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <LEDGER NAME="Chennai Tannery Exports" ACTION="Create">
+            <PARENT>Sundry Creditors</PARENT>
+            <LEDGERPHONE>+91 44 2555 0199</LEDGERPHONE>
+            <EMAIL>sales@chennaitannery.example</EMAIL>
+            <LEDSTATENAME>Tamil Nadu</LEDSTATENAME>
+            <BILLCREDITPERIOD>45 Days</BILLCREDITPERIOD>
+          </LEDGER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <STOCKITEM NAME="Leather finished - black" ACTION="Create">
+            <PARENT>Raw Material - Leather</PARENT>
+            <BASEUNITS>sq_ft</BASEUNITS>
+            <CLOSINGBALANCE>1200 sq_ft</CLOSINGBALANCE>
+            <CLOSINGRATE>130/sq_ft</CLOSINGRATE>
+          </STOCKITEM>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <STOCKITEM NAME="Metal eyelets" ACTION="Create">
+            <PARENT>Raw Material - Components</PARENT>
+            <BASEUNITS>piece</BASEUNITS>
+            <CLOSINGBALANCE>20000 piece</CLOSINGBALANCE>
+            <CLOSINGRATE>0.6/piece</CLOSINGRATE>
+          </STOCKITEM>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Sales" ACTION="Create">
+            <DATE>20261102</DATE>
+            <VOUCHERTYPENAME>Sales</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>INV-0106</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Lucknow Footwear Bazaar</PARTYLEDGERNAME>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Lucknow Footwear Bazaar</LEDGERNAME>
+              <AMOUNT>-157500.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Sales - Footwear</LEDGERNAME>
+              <AMOUNT>150000.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Output IGST 5%</LEDGERNAME>
+              <AMOUNT>7500.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Sales" ACTION="Create">
+            <DATE>20261015</DATE>
+            <VOUCHERTYPENAME>Sales</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>INV-0107</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Agra Shoe Emporium</PARTYLEDGERNAME>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Agra Shoe Emporium</LEDGERNAME>
+              <AMOUNT>-84000.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Sales - Footwear</LEDGERNAME>
+              <AMOUNT>80000.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Output CGST 2.5%</LEDGERNAME>
+              <AMOUNT>2000.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Output SGST 2.5%</LEDGERNAME>
+              <AMOUNT>2000.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+      </REQUESTDATA>
+    </IMPORTDATA>
+  </BODY>
+</ENVELOPE>

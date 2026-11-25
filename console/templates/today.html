@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Today{% endblock %}
+{% block style %}
+.att{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--line2)}
+.att:last-child{border-bottom:0}
+.tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:6px;min-width:70px;text-align:center}
+.t-action{background:var(--blueBg);color:var(--blue)}.t-bad{background:var(--badBg);color:var(--bad)}.t-warn{background:var(--warnBg);color:var(--warn)}
+.att .tx{flex:1;min-width:0}.att .tx b{display:block;font-weight:600}.att .tx span{color:var(--muted);font-size:12.5px}
+.two{grid-template-columns:1.5fr 1fr;align-items:start}
+@media (max-width:1000px){.two{grid-template-columns:1fr}}
+{% endblock %}
+{% block body %}
+<div class="head">
+  <div><h1>Good {{ 'morning' }}, here's what needs you today</h1><p>{{ today.strftime('%A, %d %B %Y') }} · every number computed by the Grout engine from your data</p></div>
+  <a class="btn primary" href="/check">+ Check a new order</a>
+</div>
+
+<div class="card brief" style="margin-bottom:16px">
+  <div class="ch"><h2>Today's brief <span class="muted" style="font-weight:500;font-size:12.5px">· written automatically from your books</span></h2><a href="/brief">Full brief &amp; timeline</a></div>
+  <div class="cb bl">
+    {% for l in brief.lines %}<a class="bline {{ l.tone }}" href="{{ l.link }}"><i></i><span>{{ l.text }}</span></a>{% endfor %}
+  </div>
+</div>
+
+<div class="grid k4" style="margin-bottom:16px">
+  <div class="card kpi"><div class="l">Cash low point (30 days)</div>
+    <div class="v {{ 'bad-t' if kpis.cash_low < 0 }}">{{ kpis.cash_low|inr }}</div>
+    <div class="s">on {{ kpis.cash_low_on|d }} · {{ kpis.cash_today|inr }} in bank today</div></div>
+  <div class="card kpi"><div class="l">Overdue from customers</div>
+    <div class="v {{ 'warn-t' if kpis.overdue }}">{{ kpis.overdue|inr }}</div>
+    <div class="s">{{ kpis.overdue_n }} customer(s) late</div></div>
+  <div class="card kpi"><div class="l">Open orders</div>
+    <div class="v">{{ kpis.open_pairs|num }} <span style="font-size:14px;color:var(--muted);font-weight:500">pairs</span></div>
+    <div class="s">{{ kpis.open_n }} order(s) in hand</div></div>
+  <div class="card kpi"><div class="l">Floor load, next 14 days</div>
+    <div class="v {{ 'bad-t' if kpis.load_pct > 100 else ('warn-t' if kpis.load_pct > 85) }}">{{ kpis.load_pct|round|int }}%</div>
+    <div class="s">busiest: {{ kpis.load_stage }}</div></div>
+</div>
+
+<div class="grid two">
+  <div class="card">
+    <div class="ch"><h2>Needs your attention</h2><span class="muted" style="font-size:12.5px">{{ attention|length }} item(s)</span></div>
+    {% for a in attention %}
+    <div class="att">
+      <span class="tag t-{{ a.tone }}">{{ a.tag }}</span>
+      <div class="tx"><b>{{ a.title }}</b><span>{{ a.sub }}</span></div>
+      {% if a.post %}<form method="post" action="{{ a.post }}"><button class="btn sm">{{ a.cta }}</button></form>
+      {% else %}<a class="btn sm {{ 'primary' if a.tone=='action' }}" href="{{ a.href }}">{{ a.cta }}</a>{% endif %}
+    </div>
+    {% else %}
+    <div class="empty">All clear. Nothing needs you right now.</div>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <div class="ch"><h2>Orders due</h2><a href="/orders">All orders</a></div>
+    <table>
+      <tr><th>Order</th><th class="r">Pairs</th><th class="r">Due</th></tr>
+      {% for o in open_rows %}
+      <tr><td><span class="mono">#{{ o.id }}</span> {{ o.customer }}<div class="muted" style="font-size:12.5px">{{ o.product }} · <span class="pill p-{{ o.status }}">{{ o.status|replace('_',' ') }}</span></div></td>
+        <td class="r">{{ o.qty|num }}</td>
+        <td class="r">{{ o.due|d }}<div class="{{ 'bad-t' if o.days_left < 5 else 'muted' }}" style="font-size:12px">{{ o.days_left }} days</div></td></tr>
+      {% else %}<tr><td colspan="3" class="empty">No open orders.</td></tr>{% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}

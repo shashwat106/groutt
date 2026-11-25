@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Activity log{% endblock %}
+{% block body %}
+<div class="head"><div><h1>Activity log</h1><p>Everything done in Grout, by people and by the AI assistant. Nothing is hidden.</p></div></div>
+<div class="card">
+  <table><tr><th>When</th><th>Via</th><th>Who</th><th>What</th><th>Result</th></tr>
+  {% for r in rows %}
+    <tr><td class="muted" style="white-space:nowrap">{{ r.at|dt }}</td>
+      <td><span class="pill {{ 'p-open' if r.via=='AI assistant' else ('p-warn' if r.via=='Automation' else 'p-ok') }}">{{ r.via }}</span></td>
+      <td>{{ r.role }}</td><td class="mono">{{ r.tool|replace('console:','') }}</td>
+      <td class="{{ '' if r.ok else 'bad-t' }}" style="font-size:13px">{{ r.result }}</td></tr>
+  {% else %}<tr><td colspan="5" class="empty">No activity yet.</td></tr>{% endfor %}</table>
+</div>
+{% endblock %}

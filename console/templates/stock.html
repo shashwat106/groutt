@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Stock & purchasing{% endblock %}
+{% block body %}
+<div class="head"><div><h1>Stock &amp; purchasing</h1><p>Free stock is what's left after open orders take their share</p></div>
+  <div class="muted">Stock value <b style="color:var(--ink);font-size:16px">{{ st.total_value|inr }}</b></div></div>
+<div class="card" style="margin-bottom:16px">
+  <div class="ch"><h2>Materials</h2><span class="muted" style="font-size:12.5px">{{ st.low_count }} need reorder</span></div>
+  <table><tr><th>Material</th><th class="r">On hand</th><th class="r">Reserved for orders</th><th class="r">Free</th><th class="r">Reorder at</th><th>Status</th><th class="r">Suggested order</th></tr>
+  {% for i in st.items %}
+    <tr><td><b>{{ i.material }}</b></td><td class="r">{{ i.on_hand|num }} {{ i.unit|unit }}</td><td class="r muted">{{ i.reserved_by_open_orders|num }}</td>
+      <td class="r"><b>{{ i.free|num }}</b></td><td class="r muted">{{ i.reorder_level|num }}</td>
+      <td><span class="pill p-{{ i.status }}">{{ i.status }}</span></td><td class="r">{{ (i.suggested_reorder_qty|num ~ ' ' ~ i.unit|unit) if i.suggested_reorder_qty else '—' }}</td></tr>
+  {% endfor %}</table>
+</div>
+<div class="card">
+  <div class="ch"><h2>Purchase orders</h2></div>
+  <table><tr><th>PO</th><th>Supplier</th><th>Items</th><th class="r">Total</th><th>Expected</th><th>Status</th></tr>
+  {% for p in pos %}
+    <tr><td class="mono">PO-{{ p.id }}</td><td>{{ p.supplier }}</td><td>{% for i in p.lines %}{{ i.qty|num }} {{ i.unit|unit }} {{ i.material }}{{ ', ' if not loop.last }}{% endfor %}</td>
+      <td class="r">{{ p.total|inr_full }}</td><td>{{ p.expected|d }}</td><td><span class="pill p-{{ p.status }}">{{ p.status }}</span></td></tr>
+  {% else %}<tr><td colspan="6" class="empty">No purchase orders.</td></tr>{% endfor %}</table>
+</div>
+{% endblock %}

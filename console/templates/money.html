@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Cash & receivables{% endblock %}
+{% block body %}
+<div class="head"><div><h1>Cash &amp; receivables</h1><p>Who owes you, and what your bank balance looks like over the next 30 days</p></div></div>
+{% if done %}<div class="flash">{{ done }}</div>{% endif %}
+<div class="grid k4" style="margin-bottom:16px">
+  <div class="card kpi"><div class="l">In bank today</div><div class="v">{{ fc.opening_balance|inr }}</div><div class="s">owner confirmed</div></div>
+  <div class="card kpi"><div class="l">Lowest in 30 days</div><div class="v {{ 'bad-t' if fc.lowest_balance < 0 }}">{{ fc.lowest_balance|inr }}</div><div class="s">on {{ fc.lowest_on|d }}{% if fc.first_shortfall_date %} · <span class="bad-t">negative from {{ fc.first_shortfall_date|d }}</span>{% endif %}</div></div>
+  <div class="card kpi"><div class="l">Customers owe</div><div class="v">{{ rec.total_outstanding|inr }}</div><div class="s">{{ rec.lines|length }} unpaid invoice(s)</div></div>
+  <div class="card kpi"><div class="l">Overdue</div><div class="v warn-t">{{ rec.total_overdue|inr }}</div><div class="s">{{ overdue_by_c|length }} customer(s)</div></div>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <div class="ch"><h2>Bank balance, next 30 days</h2><span class="muted" style="font-size:12.5px">{{ fc.days[0].day|d }} → {{ fc.days[-1].day|d }} · closing {{ fc.closing_balance|inr }}</span></div>
+  <div class="cb">
+    <svg viewBox="0 0 {{ chart_w }} {{ chart_h }}" style="width:100%;height:200px;display:block" preserveAspectRatio="none" role="img" aria-label="Projected bank balance">
+      <line x1="0" x2="{{ chart_w }}" y1="{{ zero_y }}" y2="{{ zero_y }}" stroke="#c0352b" stroke-dasharray="5 5" stroke-width="1" opacity=".7"/>
+      <text x="4" y="{{ zero_y - 5 }}" font-size="11" fill="#c0352b">₹0</text>
+      <polyline points="{{ pts }}" fill="none" stroke="#1f4fa8" stroke-width="2.5" stroke-linejoin="round"/>
+    </svg>
+    <details style="margin-top:10px"><summary>Assumptions</summary><ul style="font-size:12.5px;color:var(--ink2)">{% for a in fc.assumptions %}<li>{{ a }}</li>{% endfor %}</ul></details>
+  </div>
+</div>
+
+<div class="card">
+  <div class="ch"><h2>Unpaid invoices</h2></div>
+  <table><tr><th>Customer</th><th>Invoice</th><th class="r">Outstanding</th><th>Due</th><th class="r">Days late</th><th></th></tr>
+  {% set ns = namespace(shown=[]) %}
+  {% for l in rec.lines %}
+    <tr><td><b>{{ l.customer }}</b></td><td class="mono">{{ l.number or ('#' ~ l.invoice_id) }}</td><td class="r">{{ l.outstanding|inr_full }}</td><td>{{ l.due_on|d }}</td>
+      <td class="r {{ 'bad-t' if l.days_overdue > 30 else ('warn-t' if l.days_overdue) }}">{{ l.days_overdue or '—' }}</td>
+      <td class="r">{% if l.days_overdue and l.customer not in ns.shown %}{% set ns.shown = ns.shown + [l.customer] %}<form method="post" action="/money/remind/{{ custs[l.customer] }}"><button class="btn sm">Send reminder</button></form>{% endif %}</td></tr>
+  {% endfor %}</table>
+</div>
+{% endblock %}

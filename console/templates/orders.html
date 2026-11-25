@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Orders{% endblock %}
+{% block style %}
+.pipe{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:16px}
+.pipe .st{padding:14px 18px;border-right:1px solid var(--line2);position:relative}
+.pipe .st:last-child{border-right:0}
+.pipe .st .l{font-size:12px;color:var(--muted);text-transform:capitalize;font-weight:550}
+.pipe .st .v{font-size:22px;font-weight:650}
+.pipe .st small{color:var(--muted)}
+{% endblock %}
+{% block body %}
+<div class="head">
+  <div><h1>Orders</h1><p>Every order from inquiry to invoice</p></div>
+  <a class="btn primary" href="/check">+ Check a new order</a>
+</div>
+<div class="card pipe">
+  {% for p in pipeline %}
+  <div class="st"><div class="l">{{ p.key|replace('_',' ') }}</div><div class="v">{{ p.n }}</div><small>{{ p.pairs|num }} pairs</small></div>
+  {% endfor %}
+</div>
+<div class="card">
+  <table>
+    <tr><th>Order #</th><th>Customer</th><th>Product</th><th class="r">Pairs</th><th class="r">Value</th><th>Due</th><th>Status</th></tr>
+    {% for r in rows %}
+    <tr>
+      <td class="mono">#{{ r.id }}</td><td>{{ r.customer }}</td><td>{{ r.product }}</td>
+      <td class="r">{{ r.qty|num }}</td><td class="r">{{ r.value|inr }}</td>
+      <td>{{ r.due|d }}{% if r.status in ('open','in_production') %} <span class="{{ 'bad-t' if r.days_left < 5 else 'muted' }}" style="font-size:12px">· {{ r.days_left }}d</span>{% endif %}</td>
+      <td><span class="pill p-{{ r.status }}">{{ r.status|replace('_',' ') }}</span></td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

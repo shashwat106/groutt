@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ biz }} · Grout</title>
+<style>
+  :root{--bg:#f4eee5;--card:#fffdf9;--ink:#2a211b;--muted:#7b6d61;--line:#e6dccf;--tan:#9a5b2e;--ok:#3d7a4e;--warn:#b7791f;--bad:#b23a3a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+  header{padding:28px 32px 8px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+  h1{font-family:Georgia,"Times New Roman",serif;font-weight:600;font-size:30px;margin:0}
+  .sub{color:var(--muted);font-size:13px}
+  main{padding:16px 32px 40px;display:grid;gap:16px;grid-template-columns:repeat(12,1fr)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .kpi{grid-column:span 3}
+  .kpi .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+  .kpi .val{font-size:28px;font-weight:650;margin:4px 0 2px;font-variant-numeric:tabular-nums}
+  .kpi .note{font-size:13px}
+  .wide{grid-column:span 8}.side{grid-column:span 4}.full{grid-column:span 12}.half{grid-column:span 6}
+  h2{font-size:15px;margin:0 0 12px;font-weight:650}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;color:var(--muted);font-weight:500;font-size:12px;border-bottom:1px solid var(--line);padding:6px 4px}
+  td{padding:7px 4px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  td.r,th.r{text-align:right}
+  .pill{display:inline-block;padding:1px 9px;border-radius:99px;font-size:12px;font-weight:600}
+  .ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+  .pill.ok{background:#e3f0e6}.pill.low{background:#f8ecd6;color:var(--warn)}.pill.out{background:#f6dede;color:var(--bad)}
+  .src{color:var(--muted);font-size:11px;margin-top:10px}
+  svg{width:100%;height:auto;display:block}
+  .act{border-left:3px solid var(--tan);padding:6px 10px;margin:8px 0;background:#faf3ea;border-radius:6px;font-size:14px}
+  .brand{color:var(--tan);font-weight:700;letter-spacing:.04em;font-size:12px}
+  @media (max-width:900px){.kpi{grid-column:span 6}.wide,.side,.half{grid-column:span 12}main,header{padding-left:16px;padding-right:16px}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="brand">GROUT</div>
+    <h1>{{ biz }}</h1>
+    <div class="sub">{{ industry|replace('_',' ')|title }}{% if city %} · {{ city }}{% endif %} · as of {{ today.strftime('%d %b %Y') }}</div>
+  </div>
+  <div class="sub">Every number computed by the Grout engine · generated {{ generated }}</div>
+</header>
+<main>
+  {% if 'cash' in metrics %}
+  <div class="card kpi">
+    <div class="label">Cash today</div>
+    <div class="val">{{ fc.opening_balance|inr }}</div>
+    <div class="note {{ 'bad' if fc.first_shortfall_date else 'ok' }}">
+      {% if fc.first_shortfall_date %}Goes negative {{ fc.first_shortfall_date.strftime('%d %b') }}{% else %}Lowest {{ fc.lowest_balance|inr }} in 30 days{% endif %}
+    </div>
+  </div>
+  {% endif %}
+  {% if 'receivables' in metrics %}
+  <div class="card kpi">
+    <div class="label">Customers owe</div>
+    <div class="val">{{ rec.total_outstanding|inr }}</div>
+    <div class="note {{ 'bad' if rec.total_overdue else 'ok' }}">{{ rec.total_overdue|inr }} overdue</div>
+  </div>
+  {% endif %}
+  {% if 'stock' in metrics %}
+  <div class="card kpi">
+    <div class="label">Stock value</div>
+    <div class="val">{{ stock.total_value|inr }}</div>
+    <div class="note {{ 'warn' if stock.low_count else 'ok' }}">{{ stock.low_count }} item(s) need reorder</div>
+  </div>
+  {% endif %}
+  {% if 'orders' in metrics %}
+  <div class="card kpi">
+    <div class="label">Open orders</div>
+    <div class="val">{{ orders|length }}</div>
+    <div class="note">{{ '{:,.0f}'.format(open_pairs) }} pairs to make</div>
+  </div>
+  {% endif %}
+
+  {% if 'cash' in metrics %}
+  <div class="card wide">
+    <h2>Cash forecast, next 30 days</h2>
+    <svg viewBox="0 0 520 100" preserveAspectRatio="none" role="img" aria-label="Projected cash balance">
+      <line x1="0" x2="520" y1="{{ zero_y }}" y2="{{ zero_y }}" stroke="#b23a3a" stroke-width="1" stroke-dasharray="4 4" opacity=".6"/>
+      <text x="4" y="{{ zero_y - 4 }}" font-size="9" fill="#b23a3a">₹0</text>
+      <polyline points="{{ spark }}" fill="none" stroke="#9a5b2e" stroke-width="2.5" stroke-linejoin="round"/>
+    </svg>
+    <div class="sub" style="display:flex;justify-content:space-between"><span>{{ fc.days[0].day.strftime('%d %b') }}</span><span>closing {{ fc.closing_balance|inr }}</span><span>{{ fc.days[-1].day.strftime('%d %b') }}</span></div>
+    <div class="src">Assumptions: {{ fc.assumptions|join(' · ') }}</div>
+  </div>
+  {% endif %}
+  {% if 'approvals' in metrics %}
+  <div class="card side">
+    <h2>Waiting for your approval</h2>
+    {% for a in pending %}<div class="act"><b>#{{ a.id }}</b> {{ a.summary }}</div>{% else %}<div class="sub">Nothing waiting. All drafts decided.</div>{% endfor %}
+  </div>
+  {% endif %}
+
+  {% if 'orders' in metrics %}
+  <div class="card half">
+    <h2>Open orders</h2>
+    <table><tr><th>#</th><th>Customer</th><th>Product</th><th class="r">Qty</th><th>Due</th></tr>
+    {% for o in orders %}<tr><td>{{ o.id }}</td><td>{{ o.customer }}</td><td>{{ o.product }}</td><td class="r">{{ '{:,.0f}'.format(o.qty) }}</td><td>{{ o.due.strftime('%d %b') }}</td></tr>{% endfor %}
+    </table>
+  </div>
+  {% endif %}
+  {% if 'receivables' in metrics %}
+  <div class="card half">
+    <h2>Who owes money</h2>
+    <table><tr><th>Customer</th><th class="r">Outstanding</th><th class="r">Days late</th></tr>
+    {% for l in rec.lines[:7] %}<tr><td>{{ l.customer }}</td><td class="r">{{ l.outstanding|inr_full }}</td><td class="r {{ 'bad' if l.days_overdue > 30 else ('warn' if l.days_overdue else '') }}">{{ l.days_overdue or '—' }}</td></tr>{% endfor %}
+    </table>
+  </div>
+  {% endif %}
+  {% if 'stock' in metrics %}
+  <div class="card {{ 'half' if 'audit' in metrics else 'full' }}">
+    <h2>Stock</h2>
+    <table><tr><th>Material</th><th class="r">On hand</th><th class="r">Reserved</th><th class="r">Free</th><th>Status</th></tr>
+    {% for i in stock.items %}<tr><td>{{ i.material }}</td><td class="r">{{ '{:,.0f}'.format(i.on_hand) }} {{ i.unit|replace('_',' ') }}</td><td class="r">{{ '{:,.0f}'.format(i.reserved_by_open_orders) }}</td><td class="r">{{ '{:,.0f}'.format(i.free) }}</td><td><span class="pill {{ i.status }}">{{ i.status }}</span></td></tr>{% endfor %}
+    </table>
+  </div>
+  {% endif %}
+  {% if 'audit' in metrics %}
+  <div class="card {{ 'half' if 'stock' in metrics else 'full' }}">
+    <h2>Audit trail</h2>
+    <table><tr><th>When</th><th>Tool</th><th>Role</th><th>Result</th></tr>
+    {% for a in audit %}<tr><td class="sub">{{ a.at }}</td><td>{{ a.tool }}</td><td>{{ a.role }}</td><td class="{{ '' if a.ok else 'bad' }}" style="font-size:12px">{{ a.result }}</td></tr>{% endfor %}
+    </table>
+  </div>
+  {% endif %}
+</main>
+</body>
+</html>

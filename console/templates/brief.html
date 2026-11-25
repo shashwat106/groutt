@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Daily brief{% endblock %}
+{% block style %}
+.lay{grid-template-columns:1.25fr 1fr;align-items:start}
+@media (max-width:1000px){.lay{grid-template-columns:1fr}}
+.bl{grid-template-columns:1fr}
+.wa{background:#e9f7ef;border:1px solid #cfe9da;border-radius:14px;padding:14px 16px;font-size:13px;white-space:pre-wrap;line-height:1.55}
+.wa b{display:block;margin-bottom:4px}
+.tl{display:grid;grid-template-columns:92px 1fr auto;gap:12px;padding:11px 18px;border-bottom:1px solid var(--line2);align-items:start}
+.tl:last-child{border-bottom:0}
+.tl .what{font-size:13px}.tl .what small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.dnav{display:flex;gap:8px;align-items:center}
+{% endblock %}
+{% block body %}
+<div class="head">
+  <div><h1>Daily brief · {{ day.strftime('%a %d %b') }}</h1><p>Written by Grout from what was booked in Tally. The AI assistant reads the same brief when you ask "what happened today?"</p></div>
+  <div class="dnav">
+    <a class="btn sm" href="/brief?day={{ prev }}">← Previous day</a>
+    {% if next %}<a class="btn sm" href="/brief?day={{ next }}">Next day →</a>{% endif %}
+    <form method="post" action="/brief/send"><button class="btn primary">Send today's brief to my WhatsApp</button></form>
+  </div>
+</div>
+{% if done %}<div class="flash">{{ done }}</div>{% endif %}
+<div class="grid lay">
+  <div class="grid" style="gap:16px">
+    <div class="card"><div class="ch"><h2>{{ b.headline }}</h2></div>
+      <div class="cb bl">{% for l in b.lines %}<a class="bline {{ l.tone }}" href="{{ l.link }}"><i></i><span>{{ l.text }}</span></a>{% endfor %}</div>
+    </div>
+    <div class="card"><div class="ch"><h2>What was booked ({{ h.voucher_count }} entries)</h2><span class="muted" style="font-size:12.5px">and what each one changed</span></div>
+      {% for v in timeline %}
+      <div class="tl">
+        <span class="pill {{ {'sales':'p-ok','receipt':'p-ok','receipt_note':'p-open','purchase':'p-warn','payment':'p-bad'}.get(v.vtype,'p-open') }}">{{ {'sales':'Sale','receipt':'Money in','receipt_note':'Goods in','purchase':'Supplier bill','payment':'Money out'}.get(v.vtype, v.vtype) }}</span>
+        <div class="what"><b>{{ v.party }}</b> <span class="mono">{{ v.number }}</span>
+          {% if v.items %}<small>{% for i in v.items %}{{ i.qty|num }} {{ (i.unit or '')|unit }} {{ i.material }}{% if i.rate %} @ {{ i.rate|inr_full }}{% endif %}{{ '; ' if not loop.last }}{% endfor %}</small>{% endif %}
+          {% if v.effect %}<small>→ {{ v.effect }}</small>{% endif %}</div>
+        <div class="r"><b>{{ v.amount|inr_full }}</b></div>
+      </div>
+      {% else %}<div class="empty">Nothing booked on this day yet. New Tally exports sync automatically every minute.</div>{% endfor %}
+    </div>
+  </div>
+  <div class="grid" style="gap:16px">
+    <div class="card"><div class="ch"><h2>How it looks on the owner's WhatsApp</h2></div>
+      <div class="cb"><div class="wa">{{ b.whatsapp_text }}</div></div></div>
+    <div class="card"><div class="ch"><h2>Briefs sent</h2><a href="/automations">Schedule</a></div>
+      <table><tr><th>For</th><th>Sent</th><th>To</th></tr>
+      {% for x in sent %}<tr><td>{{ x.for_date|d }}</td><td class="muted">{{ x.at|dt }} · {{ x.trigger }}</td><td class="muted">{{ x.to }}</td></tr>
+      {% else %}<tr><td colspan="3" class="empty">The morning brief goes out automatically at 9:00.</td></tr>{% endfor %}</table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+data/
+out/
+.env
+.pytest_cache/
+.playwright-mcp/
+
+# Local-only: machine paths, synced books, generated demo files
+.gemini/settings.json
+inbox/
+seed/files/generated/
+*.db
