@@ -6,6 +6,10 @@ Factories already have Tally, Excel and WhatsApp. What's missing is everything i
 it reads your books, checks your bills, chases payments, briefs you every morning, and answers any question about
 the business in any AI app.
 
+![Gemini CLI answering "What happened today at Sharma Footwear?" through Grout's get_daily_brief tool](docs/gemini-brief.png)
+
+*Gemini asking Grout for today's brief (demo data). Every number comes from Grout's engine, not the AI.*
+
 **An MCP server that gives any AI app (Claude, Gemini, ChatGPT, Cursor…) the brain of a small manufacturing business.**
 It combines a business core (sales, stock, money, people), an **industry pack** (leather footwear first) and
 the **business's own data** (Tally / Excel). Through MCP tools the AI can **Ask, Simulate, Act and Build**.
